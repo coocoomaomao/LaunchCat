@@ -1,0 +1,45 @@
+name: Desktop Build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: npm install
+      - run: npm test
+      - run: npm run check
+      - run: npm run dist:win
+      - name: Collect installer
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          New-Item -ItemType Directory -Force -Path release-files | Out-Null
+          $installer = Get-ChildItem -Path dist -Filter "*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer not found" }
+          Copy-Item $installer.FullName -Destination "release-files/LaunchCat-Setup-v$version.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LaunchCat-Windows
+          path: release-files/*.exe
+          if-no-files-found: error
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "v$version"
+          $asset = "release-files/LaunchCat-Setup-v$version.exe"
+          if (gh release view $tag --repo "${{ github.repository }}" 2>$null) {
+            gh release upload $tag $asset --clobber --repo "${{ github.repository }}"
+          } else {
+            gh release create $tag $asset --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "LaunchCat 发布猫 v$version" --notes "输入 GitHub 项目，一次生成宣传海报、小红书文案、Release、下载说明和 15 秒演示脚本。"
+          }
