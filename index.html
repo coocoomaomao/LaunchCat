@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LaunchCat 发布猫</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="brand"><div class="cat-logo" aria-hidden="true">🐈‍⬛</div><div><b>LaunchCat 发布猫</b><span>喵造实验室 · v0.1</span></div></div><div class="tagline">代码写完了？剩下的交给猫。</div></header>
+<main class="layout"><aside class="sidebar">
+<section class="hero card"><span class="eyebrow">GITHUB → LAUNCH PACK</span><h1>一个项目，<em>一次打包发布。</em></h1><p>读取 GitHub 项目信息，自动生成小红书文案、Release、下载说明、15 秒脚本和两张 3:4 宣传海报。</p></section>
+<section class="card"><div class="section-title"><span>01</span><b>读取项目</b></div><label>GitHub 仓库<div class="repo-row"><input id="repoInput" value="https://github.com/coocoomaomao/ShotCat" placeholder="owner/repo 或 GitHub URL"><button id="analyzeBtn" class="primary">分析</button></div></label><div id="repoStatus" class="status">可以直接用 ShotCat 测试。</div></section>
+<section class="card hidden" id="projectCard"><div class="section-title"><span>02</span><b>确认发布信息</b></div><label>产品名<input id="productName"></label><label>一句话介绍<textarea id="oneLiner" rows="2"></textarea></label><div class="two-col"><label>版本<input id="version"></label><label>目标用户<input id="audience" value="想提高效率的人"></label></div><label>核心卖点 1<input id="feature1"></label><label>核心卖点 2<input id="feature2"></label><label>核心卖点 3<input id="feature3"></label><label>核心卖点 4<input id="feature4"></label><button id="generateBtn" class="primary wide">生成整套 Launch Pack</button></section>
+<section class="card hidden" id="shotCard"><div class="section-title"><span>03</span><b>项目截图</b></div><button id="chooseShotBtn" class="secondary wide">选择一张软件截图</button><small id="shotName">可选。不选也能自动生成海报。</small></section>
+</aside><section class="workspace">
+<div class="workspace-head"><div><small>LAUNCH PACK</small><b id="packTitle">等待分析项目</b></div><div class="workspace-actions"><button id="repoBtn" class="ghost" disabled>打开 GitHub</button><button id="releaseBtn" class="ghost" disabled>打开下载页</button></div></div>
+<section class="empty-state" id="emptyState"><div class="big-cat">🐈‍⬛</div><h2>先给猫一个 GitHub 项目</h2><p>LaunchCat 会自动读取 README、版本和 Release，再把发布要用的东西一次性整理出来。</p><div class="flow"><span>GitHub</span><i>→</i><span>LaunchCat</span><i>→</i><span>海报 + 文案 + Release</span></div></section>
+<div id="resultArea" class="hidden"><nav class="tabs" id="tabs"><button class="active" data-tab="poster">宣传海报</button><button data-tab="xhs">小红书文案</button><button data-tab="release">Release</button><button data-tab="download">下载说明</button><button data-tab="video">15 秒脚本</button></nav>
+<section class="tab-panel" data-panel="poster"><div class="poster-grid"><article class="poster-card"><div class="poster-head"><div><b>海报 01 · 首图</b><small>1080 × 1440 · 3:4</small></div><button data-export="cover" class="secondary">导出 PNG</button></div><div class="canvas-wrap"><canvas id="coverCanvas" width="1080" height="1440"></canvas></div></article><article class="poster-card"><div class="poster-head"><div><b>海报 02 · 功能页</b><small>1080 × 1440 · 3:4</small></div><button data-export="features" class="secondary">导出 PNG</button></div><div class="canvas-wrap"><canvas id="featuresCanvas" width="1080" height="1440"></canvas></div></article></div></section>
+<section class="tab-panel hidden" data-panel="xhs"><article class="text-card"><div class="text-head"><b>小红书宣传文案</b><button data-copy="xhs" class="secondary">复制</button></div><textarea id="outXhs" readonly></textarea></article></section><section class="tab-panel hidden" data-panel="release"><article class="text-card"><div class="text-head"><b>GitHub Release 文案</b><button data-copy="release" class="secondary">复制</button></div><textarea id="outRelease" readonly></textarea></article></section><section class="tab-panel hidden" data-panel="download"><article class="text-card"><div class="text-head"><b>粉丝下载说明</b><button data-copy="download" class="secondary">复制</button></div><textarea id="outDownload" readonly></textarea></article></section><section class="tab-panel hidden" data-panel="video"><article class="text-card"><div class="text-head"><b>15 秒软件演示脚本</b><button data-copy="video" class="secondary">复制</button></div><textarea id="outVideo" readonly></textarea></article></section></div>
+</section></main></div><div class="toast" id="toast"></div><script src="app.js"></script></body></html>
