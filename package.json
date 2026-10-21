@@ -1,0 +1,27 @@
+{
+  "name": "launchcat-desktop",
+  "version": "0.1.0",
+  "description": "LaunchCat 发布猫 - turn a GitHub project into a launch pack",
+  "author": "MeowBuild Lab",
+  "license": "MIT",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/core.test.cjs",
+    "check": "node --check app.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/launchcat-core.cjs",
+    "dist:win": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.meowbuild.launchcat",
+    "productName": "LaunchCat 发布猫",
+    "asar": true,
+    "files": ["index.html", "styles.css", "app.js", "electron/**/*", "README.md"],
+    "directories": {"output": "dist"},
+    "win": {"target": [{"target": "nsis", "arch": ["x64"]}],"forceCodeSigning": false},
+    "nsis": {"oneClick": false,"allowToChangeInstallationDirectory": true,"createDesktopShortcut": true,"createStartMenuShortcut": true,"shortcutName": "LaunchCat 发布猫","deleteAppDataOnUninstall": false}
+  }
+}
