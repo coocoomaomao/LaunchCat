@@ -1,0 +1,106 @@
+name: Build MeowAI Employee Windows EXE
+
+on:
+  push:
+    branches:
+      - meow-ai-employee-v0.3
+    paths:
+      - 'meow-ai-build/**'
+      - '.github/workflows/meow-ai-employee-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+
+      - name: Restore source payload
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem "meow-ai-build/payload/part*.b64" | Sort-Object Name
+          $payload = ""
+          foreach ($part in $parts) {
+            $payload += Get-Content $part.FullName -Raw
+          }
+          $bytes = [Convert]::FromBase64String($payload)
+          [IO.File]::WriteAllBytes("$PWD\MeowAI-Employee-v0.3.0-source.zip", $bytes)
+          New-Item -ItemType Directory -Force -Path "$PWD\build-src" | Out-Null
+          Expand-Archive -LiteralPath "$PWD\MeowAI-Employee-v0.3.0-source.zip" -DestinationPath "$PWD\build-src" -Force
+          Write-Host "Restored source files:"
+          Get-ChildItem "$PWD\build-src"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: build-src/package.json
+
+      - name: Install dependencies
+        working-directory: build-src
+        run: npm install --no-audit --no-fund
+
+      - name: Run tests
+        working-directory: build-src
+        run: npm test
+
+      - name: Syntax check
+        working-directory: build-src
+        run: npm run check
+
+      - name: Build NSIS installer
+        working-directory: build-src
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:win
+
+      - name: Collect installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem "$PWD\build-src\dist" -Filter "*.exe" | Sort-Object Length -Descending | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer .exe was not generated." }
+          New-Item -ItemType Directory -Force -Path "$PWD\release-files" | Out-Null
+          Copy-Item $installer.FullName "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe"
+          Get-FileHash "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe" -Algorithm SHA256 | Format-List
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeowAI-Employee-Windows-v0.3.0
+          path: release-files/MeowAI-Employee-Setup-v0.3.0.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "meow-ai-v0.3.0"
+          $asset = "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe"
+          $notes = @"
+          喵喵AI员工 v0.3.0 Windows 正式安装版
+
+          核心功能：
+          - 企业 PDF / Word / Excel / TXT / Markdown 私有知识库
+          - AI 客服与知识来源展示
+          - 客户姓名 / 手机号 / 需求留资
+          - 多家租车公司价格对比
+          - 城市、车型、座位数、日期筛选
+          - 日租价、保险、服务费、押金、异地还车费拆分
+          - 企业资料和业务数据保存到用户 AppData，升级软件不覆盖
+
+          安装：
+          下载 MeowAI-Employee-Setup-v0.3.0.exe 后双击安装即可。
+          Windows 若提示未知发布者，是因为当前版本尚未购买代码签名证书，可选择“更多信息 → 仍要运行”。
+          "@
+
+          if (gh release view $tag --repo "${{ github.repository }}" 2>$null) {
+            gh release upload $tag $asset --clobber --repo "${{ github.repository }}"
+          } else {
+            gh release create $tag $asset --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "喵喵AI员工 v0.3.0" --notes $notes
+          }
