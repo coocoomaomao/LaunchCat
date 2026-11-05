@@ -3,7 +3,7 @@ name: Build MeowAI Employee Windows EXE
 on:
   push:
     branches:
-      - meow-ai-employee-v0.3
+      - meow-ai-employee-v0.5
     paths:
       - 'meow-ai-build/**'
       - '.github/workflows/meow-ai-employee-release.yml'
@@ -28,9 +28,9 @@ jobs:
             $payload += Get-Content $part.FullName -Raw
           }
           $bytes = [Convert]::FromBase64String($payload)
-          [IO.File]::WriteAllBytes("$PWD\MeowAI-Employee-v0.3.0-source.zip", $bytes)
+          [IO.File]::WriteAllBytes("$PWD\MeowAI-Employee-v0.5.0-source.zip", $bytes)
           New-Item -ItemType Directory -Force -Path "$PWD\build-src" | Out-Null
-          Expand-Archive -LiteralPath "$PWD\MeowAI-Employee-v0.3.0-source.zip" -DestinationPath "$PWD\build-src" -Force
+          Expand-Archive -LiteralPath "$PWD\MeowAI-Employee-v0.5.0-source.zip" -DestinationPath "$PWD\build-src" -Force
           Write-Host "Restored source files:"
           Get-ChildItem "$PWD\build-src"
 
@@ -65,14 +65,14 @@ jobs:
           $installer = Get-ChildItem "$PWD\build-src\dist" -Filter "*.exe" | Sort-Object Length -Descending | Select-Object -First 1
           if (-not $installer) { throw "Windows installer .exe was not generated." }
           New-Item -ItemType Directory -Force -Path "$PWD\release-files" | Out-Null
-          Copy-Item $installer.FullName "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe"
-          Get-FileHash "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe" -Algorithm SHA256 | Format-List
+          Copy-Item $installer.FullName "$PWD\release-files\MeowAI-Employee-Setup-v0.5.0.exe"
+          Get-FileHash "$PWD\release-files\MeowAI-Employee-Setup-v0.5.0.exe" -Algorithm SHA256 | Format-List
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MeowAI-Employee-Windows-v0.3.0
-          path: release-files/MeowAI-Employee-Setup-v0.3.0.exe
+          name: MeowAI-Employee-Windows-v0.5.0
+          path: release-files/MeowAI-Employee-Setup-v0.5.0.exe
           if-no-files-found: error
 
       - name: Publish GitHub Release
@@ -80,27 +80,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "meow-ai-v0.3.0"
-          $asset = "$PWD\release-files\MeowAI-Employee-Setup-v0.3.0.exe"
+          $tag = "meow-ai-v0.5.0"
+          $asset = "$PWD\release-files\MeowAI-Employee-Setup-v0.5.0.exe"
           $notes = @"
-          喵喵AI员工 v0.3.0 Windows 正式安装版
+          喵喵AI员工 v0.5.0 · 真实数据源版
 
-          核心功能：
-          - 企业 PDF / Word / Excel / TXT / Markdown 私有知识库
-          - AI 客服与知识来源展示
-          - 客户姓名 / 手机号 / 需求留资
-          - 多家租车公司价格对比
-          - 城市、车型、座位数、日期筛选
-          - 日租价、保险、服务费、押金、异地还车费拆分
-          - 企业资料和业务数据保存到用户 AppData，升级软件不覆盖
+          新增：
+          - 手机端真实数据源中心
+          - 神州租车官方开放平台适配层（需商务授权参数）
+          - 飞猪租车合作接口桥接层（需业务对接）
+          - Excel/CSV 商家真实报价
+          - 一嗨公开信息源说明，不把网页动态价冒充实时价
+          - 官方源/商家价标识
+          - 报价新鲜度与过期提醒
+          - 继续支持 AI 顾问 → 多公司比价 → 选车 → 留资成交
 
-          安装：
-          下载 MeowAI-Employee-Setup-v0.3.0.exe 后双击安装即可。
-          Windows 若提示未知发布者，是因为当前版本尚未购买代码签名证书，可选择“更多信息 → 仍要运行”。
+          说明：
+          未配置神州/飞猪合作参数时，软件会明确显示“待授权/配置”，不会伪造官方实时价格。
           "@
 
           if (gh release view $tag --repo "${{ github.repository }}" 2>$null) {
             gh release upload $tag $asset --clobber --repo "${{ github.repository }}"
           } else {
-            gh release create $tag $asset --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "喵喵AI员工 v0.3.0" --notes $notes
+            gh release create $tag $asset --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "喵喵AI员工 v0.5.0 · 真实数据源版" --notes $notes
           }
